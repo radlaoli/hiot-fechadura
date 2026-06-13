@@ -12,32 +12,35 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/Users/eduardo/Developer/PlatformIO/Hiot Fechadura/.pio/build/esp32dev/firmware.elf",
-            "projectEnvName": "esp32dev",
-            "toolchainBinDir": "/Users/eduardo/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "executable": "/Users/eduardo/Developer/PlatformIO/hiot-fechadura/firmware/.pio/build/portenta/firmware.elf",
+            "projectEnvName": "portenta",
+            "toolchainBinDir": "/Users/eduardo/.platformio/packages/toolchain-gccarmnoneeabi/bin",
             "internalConsoleOptions": "openOnSessionStart",
+            "svdPath": "/Users/eduardo/.platformio/platforms/renesas-ra/misc/svd/R7FA6M5BH.svd",
             "preLaunchTask": {
                 "type": "PlatformIO",
-                "task": "Pre-Debug"
+                "task": "Pre-Debug (portenta)"
             }
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/Users/eduardo/Developer/PlatformIO/Hiot Fechadura/.pio/build/esp32dev/firmware.elf",
-            "projectEnvName": "esp32dev",
-            "toolchainBinDir": "/Users/eduardo/.platformio/packages/toolchain-xtensa-esp32/bin",
-            "internalConsoleOptions": "openOnSessionStart"
+            "executable": "/Users/eduardo/Developer/PlatformIO/hiot-fechadura/firmware/.pio/build/portenta/firmware.elf",
+            "projectEnvName": "portenta",
+            "toolchainBinDir": "/Users/eduardo/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "internalConsoleOptions": "openOnSessionStart",
+            "svdPath": "/Users/eduardo/.platformio/platforms/renesas-ra/misc/svd/R7FA6M5BH.svd"
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/Users/eduardo/Developer/PlatformIO/Hiot Fechadura/.pio/build/esp32dev/firmware.elf",
-            "projectEnvName": "esp32dev",
-            "toolchainBinDir": "/Users/eduardo/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "executable": "/Users/eduardo/Developer/PlatformIO/hiot-fechadura/firmware/.pio/build/portenta/firmware.elf",
+            "projectEnvName": "portenta",
+            "toolchainBinDir": "/Users/eduardo/.platformio/packages/toolchain-gccarmnoneeabi/bin",
             "internalConsoleOptions": "openOnSessionStart",
+            "svdPath": "/Users/eduardo/.platformio/platforms/renesas-ra/misc/svd/R7FA6M5BH.svd",
             "loadMode": "manual"
         }
     ]
