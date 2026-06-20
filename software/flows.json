@@ -1,0 +1,438 @@
+[
+    {
+        "id": "9dac3a16c184f8e6",
+        "type": "tab",
+        "label": "Sistema Fechadura",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "e754a80602f18ba1",
+        "type": "mqtt-broker",
+        "name": "Local",
+        "broker": "127.0.0.1",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "deaf7420d8c4baaf",
+        "type": "MySQLdatabase",
+        "name": "fechadura_db",
+        "host": "127.0.0.1",
+        "port": "3307",
+        "db": "fechadura_db",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "fd65cfb8e82bf23a",
+        "type": "mqtt in",
+        "z": "9dac3a16c184f8e6",
+        "name": "Recebe Tag ",
+        "topic": "fechadura/nfc",
+        "qos": "1",
+        "datatype": "utf8",
+        "broker": "e754a80602f18ba1",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 110,
+        "y": 120,
+        "wires": [
+            [
+                "bca141bb037f685e"
+            ]
+        ]
+    },
+    {
+        "id": "bca141bb037f685e",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Query Busca Usuário",
+        "func": "var tag = msg.payload.trim();\nmsg.tag = tag;\nmsg.topic = \"SELECT u.id, u.nome FROM permissoes_fechadura p JOIN usuarios u ON p.usuario_id = u.id WHERE p.tag_nfc = '\" + tag + \"' AND p.ativo = 1;\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 120,
+        "wires": [
+            [
+                "1bfa26ee66c6572e"
+            ]
+        ]
+    },
+    {
+        "id": "1bfa26ee66c6572e",
+        "type": "mysql",
+        "z": "9dac3a16c184f8e6",
+        "mydb": "deaf7420d8c4baaf",
+        "name": "Busca Usuário",
+        "x": 580,
+        "y": 120,
+        "wires": [
+            [
+                "38f8e6d76c882c10"
+            ]
+        ]
+    },
+    {
+        "id": "38f8e6d76c882c10",
+        "type": "switch",
+        "z": "9dac3a16c184f8e6",
+        "name": "Verifica Usuário",
+        "property": "payload.length",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "lte",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 140,
+        "y": 240,
+        "wires": [
+            [
+                "517b14f707c0bbcb"
+            ],
+            [
+                "664e285e1cc70a6e"
+            ]
+        ]
+    },
+    {
+        "id": "517b14f707c0bbcb",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Liberação e Log",
+        "func": "var usuario = msg.payload[0];\nmsg.usuario_id = usuario.id;\nmsg.autorizado = 1;\n\nflow.set(\"status_nfc\", \"aprovado\");\nmsg.payload = \"ABRIR\";\n\nmsg.query_historico = \"INSERT INTO historico_sistema (tipo_evento, tag_nfc, usuario_id, autorizado, descricao) VALUES ('NFC_AUTORIZADO', '\" + msg.tag + \"', \" + usuario.id + \", 1, 'Acesso liberado: \" + usuario.nome + \"');\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 220,
+        "wires": [
+            [
+                "0784727373a19455",
+                "c43e4cf252abfa79",
+                "3f59eb4147b4dfe7"
+            ]
+        ]
+    },
+    {
+        "id": "664e285e1cc70a6e",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Bloqueio e Log",
+        "func": "msg.autorizado = 0;\nflow.set(\"status_nfc\", \"bloqueado\");\nmsg.payload = \"NEGADO\";\n\nmsg.query_historico = \"INSERT INTO historico_sistema (tipo_evento, tag_nfc, usuario_id, autorizado, descricao) VALUES ('NFC_NEGADO', '\" + msg.tag + \"', NULL, 0, 'Tentativa de acesso com tag invalida.');\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 280,
+        "wires": [
+            [
+                "0784727373a19455",
+                "c43e4cf252abfa79"
+            ]
+        ]
+    },
+    {
+        "id": "3f59eb4147b4dfe7",
+        "type": "delay",
+        "z": "9dac3a16c184f8e6",
+        "name": "Limite da Porta Aberta (15s)",
+        "pauseType": "delay",
+        "timeout": "15",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 690,
+        "y": 160,
+        "wires": [
+            [
+                "f0504085bbbfd196"
+            ]
+        ]
+    },
+    {
+        "id": "f0504085bbbfd196",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Expira Permissão",
+        "func": "flow.set(\"status_nfc\", \"bloqueado\");\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 930,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0784727373a19455",
+        "type": "mqtt out",
+        "z": "9dac3a16c184f8e6",
+        "name": "Comando Fechadura",
+        "topic": "fechadura/comando",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e754a80602f18ba1",
+        "x": 680,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "c43e4cf252abfa79",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Troca para Query Histórico",
+        "func": "msg.topic = msg.query_historico;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 280,
+        "wires": [
+            [
+                "8956e06ee1d2d3a0"
+            ]
+        ]
+    },
+    {
+        "id": "8956e06ee1d2d3a0",
+        "type": "mysql",
+        "z": "9dac3a16c184f8e6",
+        "mydb": "deaf7420d8c4baaf",
+        "name": "Grava Histórico",
+        "x": 1020,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9cb9330e6b36ca00",
+        "type": "mqtt in",
+        "z": "9dac3a16c184f8e6",
+        "name": "Recebe Sensor Reed",
+        "topic": "fechadura/sensor",
+        "qos": "1",
+        "datatype": "utf8",
+        "broker": "e754a80602f18ba1",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 130,
+        "y": 420,
+        "wires": [
+            [
+                "390a1f17634c6e28"
+            ]
+        ]
+    },
+    {
+        "id": "390a1f17634c6e28",
+        "type": "switch",
+        "z": "9dac3a16c184f8e6",
+        "name": "Se Porta Aberta",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 340,
+        "y": 420,
+        "wires": [
+            [
+                "88ee6d5869cd0c32"
+            ]
+        ]
+    },
+    {
+        "id": "88ee6d5869cd0c32",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Processador de Segurança",
+        "func": "var resultadoNFC = flow.get(\"status_nfc\") || \"bloqueado\";\n\nif (resultadoNFC === \"aprovado\") {\n    flow.set(\"status_nfc\", \"bloqueado\");\n    msg.topic = \"INSERT INTO historico_sistema (tipo_evento, tag_nfc, usuario_id, autorizado, descricao) VALUES ('ABERTURA_COMUM', NULL, NULL, NULL, 'Porta aberta apos autenticacao valida.');\";\n    msg.pushover_msg = \"Acesso confirmado.\";\n    return [msg, null]; \n} else {\n    msg.topic = \"INSERT INTO historico_sistema (tipo_evento, tag_nfc, usuario_id, autorizado, descricao) VALUES ('ARROMBAMENTO', NULL, NULL, NULL, 'Alerta: Abertura de porta sem autorizacao.');\";\n    msg.pushover_msg = \"Alerta de seguranca: Abertura nao autorizada detectada.\";\n    return [null, msg];\n}",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 420,
+        "wires": [
+            [
+                "8956e06ee1d2d3a0"
+            ],
+            [
+                "8956e06ee1d2d3a0",
+                "ba176b8ba661c088"
+            ]
+        ]
+    },
+    {
+        "id": "ba176b8ba661c088",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Prepara Pushover",
+        "func": "msg.payload = msg.pushover_msg;\nmsg.title = \"Alerta Fechadura\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 870,
+        "y": 460,
+        "wires": [
+            [
+                "0e85bd4a89cf8d36"
+            ]
+        ]
+    },
+    {
+        "id": "0e85bd4a89cf8d36",
+        "type": "pushover",
+        "z": "9dac3a16c184f8e6",
+        "name": "Notificação",
+        "device": "",
+        "title": "",
+        "priority": "0",
+        "sound": "",
+        "url": "",
+        "url_title": "",
+        "html": false,
+        "x": 1090,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "5191ae8051823a84",
+        "type": "mqtt in",
+        "z": "9dac3a16c184f8e6",
+        "name": "Recebe Cadastro",
+        "topic": "fechadura/cadastro",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "e754a80602f18ba1",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 120,
+        "y": 560,
+        "wires": [
+            [
+                "33e315f3307864cc"
+            ]
+        ]
+    },
+    {
+        "id": "33e315f3307864cc",
+        "type": "function",
+        "z": "9dac3a16c184f8e6",
+        "name": "Query Cadastro",
+        "func": "var dados = msg.payload;\nvar nomeLimpo = dados.nome.trim();\nvar tagLimpa = dados.tag.trim().toUpperCase();\n\nif (nomeLimpo === \"\" || tagLimpa === \"\") {\n    node.error(\"Campos obrigatorios vazios.\");\n    return null;\n}\n\nmsg.topic = \"INSERT INTO usuarios (nome, tag_nfc) VALUES ('\" + nomeLimpo + \"', '\" + tagLimpa + \"');\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 560,
+        "wires": [
+            [
+                "44021a476d0799c4"
+            ]
+        ]
+    },
+    {
+        "id": "44021a476d0799c4",
+        "type": "mysql",
+        "z": "9dac3a16c184f8e6",
+        "mydb": "deaf7420d8c4baaf",
+        "name": "Grava Novo Usuário",
+        "x": 640,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "90776ba421b95734",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-mysql": "3.0.0",
+            "node-red-node-pushover": "0.3.1"
+        }
+    }
+]
